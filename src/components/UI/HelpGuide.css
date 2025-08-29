@@ -1,0 +1,16 @@
+/* تنسيقات صفحة دليل الاستخدام RTL */
+.rtl-guide {
+  direction: rtl;
+  padding: 2rem;
+}
+.guide-title {
+  margin-bottom: 1rem;
+  color: #2563eb;
+}
+.guide-content {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: inherit;
+  white-space: pre-wrap;
+}
