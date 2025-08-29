@@ -10,7 +10,9 @@ import {
   SettingsIcon,
   ChevronLeft,
   Activity,
-  TestTube
+  TestTube,
+  Trash2,
+  Tag
 } from 'lucide-react';
 
 /**
@@ -35,6 +37,9 @@ const menuItems = [
   { id: 'departments', label: 'إدارة الأقسام', icon: Building2 },
   { id: 'reports', label: 'التقارير', icon: FileText },
   { id: 'attachments', label: 'مرفقات', icon: FileText },
+  { id: 'trash', label: 'سلة المحذوفات', icon: Trash2 },
+  { id: 'users', label: 'إدارة المستخدمين', icon: Users },
+  { id: 'categories', label: 'إدارة التصنيفات', icon: Tag },
   { id: 'system-log', label: 'سجل النظام', icon: Activity },
   { id: 'settings', label: 'الإعدادات', icon: Settings },
   { id: 'advanced-settings', label: 'الإعدادات المتقدمة', icon: SettingsIcon },

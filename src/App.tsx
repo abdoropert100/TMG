@@ -21,6 +21,9 @@ import SystemLogPage from './pages/SystemLogPage';
 import Settings from './components/Settings/Settings';
 import AdvancedSettings from './components/Settings/AdvancedSettings';
 import SystemTestPage from './components/SystemTest/SystemTestPage';
+import TrashPage from './components/Trash/TrashPage';
+import UserManagement from './components/Auth/UserManagement';
+import CategoryManager from './components/Categories/CategoryManager';
 
 /**
  * مكون التطبيق الداخلي
@@ -107,6 +110,12 @@ const AppContent: React.FC = () => {
         return <Reports />;
       case 'attachments':
         return <AttachmentsPage />;
+      case 'trash':
+        return <TrashPage />;
+      case 'users':
+        return <UserManagement />;
+      case 'categories':
+        return <CategoryManager isOpen={true} onClose={() => actions.setCurrentPage('dashboard')} />;
       case 'system-log':
         return <SystemLogPage />;
       case 'settings':

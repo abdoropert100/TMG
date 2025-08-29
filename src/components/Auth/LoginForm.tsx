@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Lock, Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { authService } from '../../services/AuthService';
 
 interface LoginCredentials {
   username: string;
@@ -56,27 +57,29 @@ const LoginForm: React.FC = () => {
     setError(null);
 
     try {
-      // البحث عن المستخدم
-      const user = availableUsers.find(u => 
-        u.username === credentials.username && u.password === credentials.password
+      // استخدام خدمة المصادقة الجديدة
+      const result = await authService.login(
+        credentials.username, 
+        credentials.password, 
+        credentials.rememberMe
       );
 
-      if (user) {
+      if (result.success && result.user) {
         // تحديث بيانات المستخدم الحالي
         actions.updateCurrentUser({
-          id: user.id,
-          name: user.name,
-          role: user.role,
-          department: user.department,
-          permissions: user.permissions
+          id: result.user.id,
+          name: result.user.fullName,
+          role: result.user.role,
+          department: result.user.departmentId || '',
+          permissions: result.user.permissions
         });
 
         // حفظ بيانات الجلسة
         const sessionData = {
-          userId: user.id,
-          username: user.username,
-          name: user.name,
-          role: user.role,
+          userId: result.user.id,
+          username: result.user.username,
+          name: result.user.fullName,
+          role: result.user.role,
           loginTime: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).getTime() // 8 ساعات
         };
@@ -88,12 +91,12 @@ const LoginForm: React.FC = () => {
         }
 
         // تسجيل عملية الدخول
-        actions.logActivity('auth', 'login', `تم تسجيل الدخول بنجاح للمستخدم ${user.name}`);
+        actions.logActivity('auth', 'login', `تم تسجيل الدخول بنجاح للمستخدم ${result.user.fullName}`);
 
         // إعادة تحميل الصفحة لتطبيق التغييرات
         window.location.reload();
       } else {
-        setError('اسم المستخدم أو كلمة المرور غير صحيحة');
+        setError(result.error || 'اسم المستخدم أو كلمة المرور غير صحيحة');
       }
     } catch (err) {
       setError('خطأ في تسجيل الدخول');

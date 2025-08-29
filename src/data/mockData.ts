@@ -6,6 +6,8 @@
 
 import { Employee, Task, Correspondence, Department, Division } from '../types';
 import { databaseService } from '../services/DatabaseService';
+import { authService } from '../services/AuthService';
+import { categoryService } from '../services/CategoryService';
 
 /**
  * قائمة الموظفين التجريبية
@@ -420,6 +422,12 @@ export const initializeMockData = async () => {
 
     // إدراج البيانات التجريبية
     console.log('جاري إدراج البيانات التجريبية...');
+    
+    // تهيئة المستخدمين الافتراضيين
+    await authService.initializeDefaultUsers();
+    
+    // تهيئة التصنيفات الافتراضية
+    await categoryService.initializeDefaultCategories();
     
     // إدراج الإدارات أولاً
     for (const dept of mockDepartments) {

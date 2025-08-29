@@ -36,7 +36,15 @@ const DB_CONFIG: DatabaseConfig = {
     'system_settings',
     'correspondents',
     'attachments',
-    'system_users'
+    'system_users',
+    'categories',
+    'category_assignments',
+    'trash_items',
+    'user_sessions',
+    'login_logs',
+    'sectors',
+    'central_departments',
+    'general_departments'
   ]
 };
 
@@ -250,6 +258,48 @@ class DatabaseService {
         // فهارس خاصة بمستخدمي النظام
         store.createIndex('username', 'username', { unique: true });
         store.createIndex('role', 'role', { unique: false });
+        store.createIndex('isActive', 'isActive', { unique: false });
+        break;
+
+      case 'categories':
+        // فهارس خاصة بالتصنيفات
+        store.createIndex('name', 'name', { unique: false });
+        store.createIndex('applicableModules', 'applicableModules', { unique: false });
+        store.createIndex('isActive', 'isActive', { unique: false });
+        break;
+
+      case 'category_assignments':
+        // فهارس خاصة بربط التصنيفات
+        store.createIndex('categoryId', 'categoryId', { unique: false });
+        store.createIndex('entityType', 'entityType', { unique: false });
+        store.createIndex('entityId', 'entityId', { unique: false });
+        break;
+
+      case 'trash_items':
+        // فهارس خاصة بسلة المحذوفات
+        store.createIndex('entityType', 'entityType', { unique: false });
+        store.createIndex('deletedBy', 'deletedBy', { unique: false });
+        store.createIndex('deletedAt', 'deletedAt', { unique: false });
+        store.createIndex('canRestore', 'canRestore', { unique: false });
+        break;
+
+      case 'sectors':
+        // فهارس خاصة بالقطاعات
+        store.createIndex('name', 'name', { unique: false });
+        store.createIndex('isActive', 'isActive', { unique: false });
+        break;
+
+      case 'central_departments':
+        // فهارس خاصة بالإدارات المركزية
+        store.createIndex('name', 'name', { unique: false });
+        store.createIndex('sectorId', 'sectorId', { unique: false });
+        store.createIndex('isActive', 'isActive', { unique: false });
+        break;
+
+      case 'general_departments':
+        // فهارس خاصة بالإدارات العامة
+        store.createIndex('name', 'name', { unique: false });
+        store.createIndex('centralDeptId', 'centralDeptId', { unique: false });
         store.createIndex('isActive', 'isActive', { unique: false });
         break;
     }
