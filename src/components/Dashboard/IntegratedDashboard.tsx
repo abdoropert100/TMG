@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { authService } from '../../services/AuthService';
 import EnhancedStatsCards from './EnhancedStatsCards';
 import RecentActivity from './RecentActivity';
 import PerformanceMetrics from './PerformanceMetrics';
@@ -24,27 +25,59 @@ import CorrespondenceWidget from './CorrespondenceWidget';
  */
 const IntegratedDashboard: React.FC = () => {
   const { state } = useApp();
+  const currentUser = authService.getCurrentUser();
   
   /**
    * حساب الإحصائيات المتكاملة من جميع الأنظمة
    */
   const integratedStats = React.useMemo(() => {
-    const totalTasks = state.tasks.length;
-    const completedTasks = state.tasks.filter(t => t.status === 'مكتملة').length;
-    const inProgressTasks = state.tasks.filter(t => t.status === 'قيد التنفيذ').length;
-    const overdueTasks = state.tasks.filter(t => t.status === 'متأخرة').length;
+    // فلترة البيانات حسب صلاحيات المستخدم
+    let visibleTasks = state.tasks || [];
+    let visibleCorrespondence = state.correspondence || [];
+    let visibleEmployees = state.employees || [];
+    let visibleDepartments = state.departments || [];
+
+    // تطبيق فلاتر الرؤية حسب الدور
+    if (currentUser && currentUser.role !== 'ادمن' && currentUser.role !== 'رئيس_المصلحة') {
+      if (currentUser.role === 'رئيس_قطاع') {
+        visibleTasks = visibleTasks.filter(t => t.sectorId === currentUser.sectorId);
+        visibleCorrespondence = visibleCorrespondence.filter(c => c.sectorId === currentUser.sectorId);
+        visibleEmployees = visibleEmployees.filter(e => e.sectorId === currentUser.sectorId);
+        visibleDepartments = visibleDepartments.filter(d => d.sectorId === currentUser.sectorId);
+      } else if (currentUser.role === 'مدير_إدارة') {
+        visibleTasks = visibleTasks.filter(t => t.department === currentUser.departmentId);
+        visibleCorrespondence = visibleCorrespondence.filter(c => c.department === currentUser.departmentId);
+        visibleEmployees = visibleEmployees.filter(e => e.department === currentUser.departmentId);
+        visibleDepartments = visibleDepartments.filter(d => d.id === currentUser.departmentId);
+      } else if (currentUser.role === 'موظف' || currentUser.role === 'فني') {
+        visibleTasks = visibleTasks.filter(t => 
+          t.assignedTo?.includes(currentUser.employeeId || '') || 
+          t.createdBy === currentUser.employeeId
+        );
+        visibleCorrespondence = visibleCorrespondence.filter(c => 
+          c.assignedTo === currentUser.employeeId || 
+          c.createdBy === currentUser.employeeId
+        );
+        visibleEmployees = visibleEmployees.filter(e => e.id === currentUser.employeeId);
+      }
+    }
     
-    const totalCorr = state.correspondence.length;
-    const incomingCorr = state.correspondence.filter(c => c.type === 'وارد').length;
-    const outgoingCorr = state.correspondence.filter(c => c.type === 'صادر').length;
-    const urgentCorr = state.correspondence.filter(c => c.urgency === 'عاجل' || c.urgency === 'فوري').length;
+    const totalTasks = visibleTasks.length;
+    const completedTasks = visibleTasks.filter(t => t.status === 'مكتملة').length;
+    const inProgressTasks = visibleTasks.filter(t => t.status === 'قيد التنفيذ').length;
+    const overdueTasks = visibleTasks.filter(t => t.status === 'متأخرة').length;
     
-    const totalEmployees = state.employees.length;
-    const activeEmployees = state.employees.filter(e => e.status === 'نشط').length;
+    const totalCorr = visibleCorrespondence.length;
+    const incomingCorr = visibleCorrespondence.filter(c => c.type === 'وارد').length;
+    const outgoingCorr = visibleCorrespondence.filter(c => c.type === 'صادر').length;
+    const urgentCorr = visibleCorrespondence.filter(c => c.urgency === 'عاجل' || c.urgency === 'فوري').length;
+    
+    const totalEmployees = visibleEmployees.length;
+    const activeEmployees = visibleEmployees.filter(e => e.status === 'نشط').length;
     
     // حساب المراسلات المرتبطة بالمهام
-    const linkedCorrespondences = state.correspondence.filter(c => c.linkedTaskId).length;
-    const linkedTasks = state.tasks.filter(t => t.linkedCorrespondenceId).length;
+    const linkedCorrespondences = visibleCorrespondence.filter(c => c.linkedTaskId).length;
+    const linkedTasks = visibleTasks.filter(t => t.linkedCorrespondenceId).length;
     
     // حساب معدل الربط بين المهام والمراسلات
     const integrationRate = totalTasks > 0 ? Math.round((linkedTasks / totalTasks) * 100) : 0;
@@ -60,15 +93,17 @@ const IntegratedDashboard: React.FC = () => {
       urgentCorr,
       totalEmployees,
       activeEmployees,
-      totalDepartments: state.departments.length,
-      totalDivisions: state.divisions.length,
+      totalDepartments: visibleDepartments.length,
+      totalDivisions: (state.divisions || []).filter(d => 
+        visibleDepartments.some(dept => dept.id === d.departmentId)
+      ).length,
       linkedCorrespondences,
       linkedTasks,
       integrationRate,
       taskCompletionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       correspondenceProcessingRate: totalCorr > 0 ? Math.round(((totalCorr - urgentCorr) / totalCorr) * 100) : 0
     };
-  }, [state]);
+  }, [state, currentUser]);
 
   return (
     <div className="space-y-8">
@@ -85,7 +120,7 @@ const IntegratedDashboard: React.FC = () => {
             </p>
             <p className="text-blue-200 mt-2 flex items-center gap-2">
               <span>👤</span>
-              <span>مرحباً {state.currentUser.name} - {state.currentUser.role}</span>
+              <span>مرحباً {currentUser?.fullName || state.currentUser.name} - {currentUser?.role || state.currentUser.role}</span>
             </p>
             <p className="text-blue-200 mt-2 flex items-center gap-2">
               <span>📅</span>
